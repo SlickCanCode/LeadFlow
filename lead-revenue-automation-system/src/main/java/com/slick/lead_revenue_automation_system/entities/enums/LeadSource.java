@@ -1,0 +1,2 @@
+package com.slick.lead_revenue_automation_system.entities.enums;
+public enum LeadSource { WEBSITE, WHATSAPP, INSTAGRAM, FACEBOOK, REFERRAL, MANUAL, OTHER }

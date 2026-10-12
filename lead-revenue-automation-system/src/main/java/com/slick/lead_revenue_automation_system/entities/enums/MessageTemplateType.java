@@ -1,0 +1,2 @@
+package com.slick.lead_revenue_automation_system.entities.enums;
+public enum MessageTemplateType { NEW_LEAD_RESPONSE, LEAD_CAPTURE, QUOTE_SENT, QUOTE_FOLLOW_UP, BOOKING_CONFIRMATION, BOOKING_REMINDER, PAYMENT_CONFIRMATION }

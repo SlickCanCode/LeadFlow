@@ -1,0 +1,3 @@
+# Implementation Note
+
+`POST /send/message` flows through the controller, message service, and central AI router. The router tries configured GPT-4+ models in order, then Gemini Flash 2.1+ models; provider adapters own HTTP calls and API keys. OpenAI does not expose reliable free-tier metadata, so `OPENAI_MODELS` must list models free for the configured account. Gemini defaults to 2.5 Flash candidates. Existing Spring Security protection is unchanged.
