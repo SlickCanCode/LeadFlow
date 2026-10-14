@@ -1,6 +1,11 @@
 package com.slick.lead_revenue_automation_system.services.AI.models;
 
+import java.util.List;
+
 import com.slick.lead_revenue_automation_system.services.AI.AiService;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatModel;
@@ -23,13 +28,14 @@ public class GptService implements AiService{
 	}
 
 	@Override
-	public String generate(String message, String model) {
+	public String generate(String systemPrompt, String userMessage, String model) {
 		if (apiKey.isBlank()) {
 			throw new IllegalStateException("OPENAI_API_KEY is not configured");
 		}
 
-		ChatResponse response = chatModelProvider.getObject().call(
-				new Prompt(message, OpenAiChatOptions.builder().model(model).build()));
+		ChatResponse response = chatModelProvider.getObject().call(new Prompt(
+				createMessages(systemPrompt, userMessage),
+				OpenAiChatOptions.builder().model(model).build()));
 
 		if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
 			throw new IllegalStateException("OpenAI returned no message content");
@@ -39,5 +45,12 @@ public class GptService implements AiService{
 			throw new IllegalStateException("OpenAI returned no message content");
 		}
 		return content;
+	}
+
+	private List<Message> createMessages(String systemPrompt, String userMessage) {
+		if (systemPrompt == null || systemPrompt.isBlank()) {
+			return List.of(new UserMessage(userMessage));
+		}
+		return List.of(new SystemMessage(systemPrompt), new UserMessage(userMessage));
 	}
 }

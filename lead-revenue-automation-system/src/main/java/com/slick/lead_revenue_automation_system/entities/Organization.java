@@ -68,4 +68,16 @@ public class Organization {
     @Column(name = "updated_at", nullable = false)
     @Setter(AccessLevel.NONE)
     private Instant updatedAt;
+
+    public Organization(String name, String slug, String email, String phone, String address,
+            String logoUrl, String timezone, String currency) {
+        this.name = name;
+        this.slug = slug;
+        this.email = email;
+        this.phone = phone;
+        this.address = address;
+        this.logoUrl = logoUrl;
+        this.timezone = timezone == null ? "UTC" : timezone;
+        this.currency = currency == null ? "USD" : currency;
+    }
 }

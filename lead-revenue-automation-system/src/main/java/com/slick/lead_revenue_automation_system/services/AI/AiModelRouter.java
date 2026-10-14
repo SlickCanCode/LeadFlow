@@ -31,19 +31,25 @@ public class AiModelRouter {
 	}
 
 	public RoutedResponse generate(String message) {
+		return generate(null, message);
+	}
+
+	public RoutedResponse generate(String systemPrompt, String userMessage) {
 		RuntimeException lastFailure = null;
 
-		// for (String model : openAiModels) {
-		// 	try {
-		// 		return new RoutedResponse(openAiService.generate(message, model), "OpenAI", model);
-		// 	} catch (RuntimeException exception) {
-		// 		lastFailure = exception;
-		// 	}
-		// }
+		for (String model : openAiModels) {
+			try {
+				return new RoutedResponse(
+						openAiService.generate(systemPrompt, userMessage, model), "OpenAI", model);
+			} catch (RuntimeException exception) {
+				lastFailure = exception;
+			}
+		}
 
 		for (String model : geminiModels) {
 			try {
-				return new RoutedResponse(geminiService.generate(message, model), "Gemini", model);
+				return new RoutedResponse(
+						geminiService.generate(systemPrompt, userMessage, model), "Gemini", model);
 			} catch (RuntimeException exception) {
 				lastFailure = exception;
 			}

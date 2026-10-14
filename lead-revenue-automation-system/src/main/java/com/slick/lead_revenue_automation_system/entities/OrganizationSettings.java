@@ -70,4 +70,15 @@ public class OrganizationSettings {
     @Column(name = "updated_at", nullable = false)
     @Setter(AccessLevel.NONE)
     private Instant updatedAt;
+
+    public OrganizationSettings(Organization organization, String businessDescription, String aiInstructions,
+            AITone aiTone, boolean autoReplyEnabled, boolean requireHumanApproval, Map<String, Object> settings) {
+        this.organization = organization;
+        this.businessDescription = businessDescription;
+        this.aiInstructions = aiInstructions;
+        this.aiTone = aiTone == null ? AITone.PROFESSIONAL : aiTone;
+        this.autoReplyEnabled = autoReplyEnabled;
+        this.requireHumanApproval = requireHumanApproval;
+        this.settings = settings == null ? Map.of() : settings;
+    }
 }
