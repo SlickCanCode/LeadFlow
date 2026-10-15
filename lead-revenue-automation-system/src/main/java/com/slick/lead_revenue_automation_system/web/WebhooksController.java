@@ -1,5 +1,6 @@
 package com.slick.lead_revenue_automation_system.web;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,10 +18,13 @@ import tools.jackson.databind.JsonNode;
 
 @RestController
 @RequestMapping("api/v1/webhooks")
-@RequiredArgsConstructor 
 public class WebhooksController {
 
-    private final MessageService messageService;
+    @Autowired 
+    private MessageService messageService;
+    public WebhooksController(MessageService messageService) {
+        this.messageService = messageService;
+    }
 
     @Value("${whatsapp.webhook.verify-token}")
     private String verifyToken;

@@ -13,11 +13,13 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-@Entity @Table(name = "lead")
+@Entity @Table(name = "lead", uniqueConstraints = @UniqueConstraint(name = "uq_lead_organization_external_id", columnNames = { "organization_id", "external_id" }))
 @Getter @Setter @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Lead {
     @Id @GeneratedValue(strategy = GenerationType.UUID) @Column(name = "id", nullable = false, updatable = false, columnDefinition = "uuid") @Setter(AccessLevel.NONE)
     private UUID id;
+    @Column(name = "external_id", length = 255)
+    private String externalId;
     @ManyToOne(fetch = FetchType.LAZY, optional = false) @JoinColumn(name = "organization_id", nullable = false)
     private Organization organization;
     @Column(name = "first_name", nullable = false, length = 100)
@@ -50,6 +52,18 @@ public class Lead {
     private Instant updatedAt;
     @Column(name = "stage_changed_at")
     private Instant stageChangedAt;
+
+    public Lead(Organization organization, String externalId, String firstName, String lastName,
+            String email, String phone, LeadSource source) {
+        this.organization = organization;
+        this.externalId = externalId;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.phone = phone;
+        this.source = source;
+    }
+
     public Set<Service> getServices() {
         return Collections.unmodifiableSet(services);
     }

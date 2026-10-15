@@ -20,12 +20,15 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.slick.lead_revenue_automation_system.dto.CreateOrganizationdto;
 import com.slick.lead_revenue_automation_system.dto.CreateOrganizationSettingsRequest;
+import com.slick.lead_revenue_automation_system.dto.CreateLeadRequest;
+import com.slick.lead_revenue_automation_system.dto.LeadResponse;
 import com.slick.lead_revenue_automation_system.dto.OrganizationResponse;
 import com.slick.lead_revenue_automation_system.dto.OrganizationSettingsResponse;
 import com.slick.lead_revenue_automation_system.entities.enums.AITone;
 import com.slick.lead_revenue_automation_system.exception.OrganizationNotFoundException;
 import com.slick.lead_revenue_automation_system.exception.OrganizationSettingsConflictException;
 import com.slick.lead_revenue_automation_system.services.OrganizationService;
+import com.slick.lead_revenue_automation_system.services.LeadService;
 
 @WebMvcTest(OrganizationController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -35,6 +38,9 @@ class OrganizationControllerTest {
 
     @MockitoBean
     private OrganizationService organizationService;
+
+        @MockitoBean
+        private LeadService leadService;
 
     @Test
     void createsOrganizationWithOnlyBusinessName() throws Exception {
@@ -146,5 +152,35 @@ class OrganizationControllerTest {
                                                 .content("{}"))
                                 .andExpect(status().isBadRequest())
                                 .andExpect(jsonPath("$.errors[0]").value("A path parameter has an invalid format."));
+        }
+
+        @Test
+        void createsManualLeadWithContactInformation() throws Exception {
+                UUID organizationId = UUID.fromString("53c13798-92d1-4f0a-9f9a-9a20f7153592");
+                UUID leadId = UUID.fromString("62d248a9-a3e2-40b1-8f0a-0b30f8264603");
+                when(leadService.createManualLead(any(CreateLeadRequest.class)))
+                                .thenReturn(new LeadResponse(leadId, organizationId, null, "Alex", "Rivera",
+                                                "alex@example.test", null, com.slick.lead_revenue_automation_system.entities.enums.LeadSource.MANUAL,
+                                                com.slick.lead_revenue_automation_system.entities.enums.LeadStatus.ACTIVE, null));
+
+                mockMvc.perform(post("/api/v1/organization/lead")
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content("{\"organizationId\":\"" + organizationId
+                                                                + "\",\"name\":\"Alex Rivera\",\"email\":\"alex@example.test\",\"source\":\"MANUAL\"}"))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.firstName").value("Alex"))
+                                .andExpect(jsonPath("$.lastName").value("Rivera"));
+        }
+
+        @Test
+        void manualLeadRequiresPhoneOrEmail() throws Exception {
+                UUID organizationId = UUID.fromString("53c13798-92d1-4f0a-9f9a-9a20f7153592");
+                mockMvc.perform(post("/api/v1/organization/lead")
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content("{\"organizationId\":\"" + organizationId
+                                                                + "\",\"name\":\"Alex Rivera\",\"source\":\"MANUAL\"}"))
+                                .andExpect(status().isBadRequest());
+
+                verify(leadService, never()).createManualLead(any(CreateLeadRequest.class));
         }
 }

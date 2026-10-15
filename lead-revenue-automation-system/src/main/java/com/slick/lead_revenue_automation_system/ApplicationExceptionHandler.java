@@ -4,6 +4,8 @@ import java.util.Arrays;
 
 import com.slick.lead_revenue_automation_system.dto.ErrorResponse;
 import com.slick.lead_revenue_automation_system.exception.OrganizationConflictException;
+import com.slick.lead_revenue_automation_system.exception.LeadConflictException;
+import com.slick.lead_revenue_automation_system.exception.LeadNotFoundException;
 import com.slick.lead_revenue_automation_system.exception.OrganizationNotFoundException;
 import com.slick.lead_revenue_automation_system.exception.OrganizationSettingsConflictException;
 import com.slick.lead_revenue_automation_system.exception.OrganizationBusinessSettingsRequiredException;
@@ -21,6 +23,18 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class ApplicationExceptionHandler {
 	private static final Logger logger = LoggerFactory.getLogger(ApplicationExceptionHandler.class);
+
+	@ExceptionHandler(LeadNotFoundException.class)
+	public ResponseEntity<Object> handleLeadNotFound(LeadNotFoundException exception) {
+		ErrorResponse error = new ErrorResponse(Arrays.asList(exception.getMessage()));
+		return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+	}
+
+	@ExceptionHandler(LeadConflictException.class)
+	public ResponseEntity<Object> handleLeadConflict(LeadConflictException exception) {
+		ErrorResponse error = new ErrorResponse(Arrays.asList(exception.getMessage()));
+		return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+	}
 
 	@ExceptionHandler(OrganizationBusinessSettingsRequiredException.class)
 	public ResponseEntity<Object> handleMissingBusinessSettings(

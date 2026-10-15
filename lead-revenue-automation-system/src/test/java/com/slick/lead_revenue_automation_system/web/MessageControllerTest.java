@@ -56,4 +56,33 @@ class MessageControllerTest {
         verify(messageService, never()).sendMessage(org.mockito.ArgumentMatchers.any(UUID.class),
                 org.mockito.ArgumentMatchers.anyString());
     }
+
+    @Test
+    void sendsWebChatRequestToMessageService() throws Exception {
+        UUID organizationId = UUID.fromString("53c13798-92d1-4f0a-9f9a-9a20f7153592");
+        when(messageService.handleWebChatMessage(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(new RoutedResponse("We can help.", "Gemini", "gemini-2.5-flash"));
+
+        mockMvc.perform(post("/api/v1/message/web-chat/send")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"organizationId\":\"" + organizationId
+                                + "\",\"externalId\":\"visitor-42\",\"message\":\"Can you help?\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.response").value("We can help."));
+    }
+
+    @Test
+    void sendsContactFormRequestToMessageService() throws Exception {
+        UUID organizationId = UUID.fromString("53c13798-92d1-4f0a-9f9a-9a20f7153592");
+        when(messageService.handleContactFormMessage(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(new RoutedResponse("Thanks for contacting us.", "Gemini", "gemini-2.5-flash"));
+
+        mockMvc.perform(post("/api/v1/message/contact-form/send")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"organizationId\":\"" + organizationId
+                                + "\",\"name\":\"Alex Rivera\",\"email\":\"alex@example.test\","
+                                + "\"message\":\"I need a quote.\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.response").value("Thanks for contacting us."));
+    }
 }

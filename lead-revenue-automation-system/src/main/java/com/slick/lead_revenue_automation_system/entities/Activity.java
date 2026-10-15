@@ -32,4 +32,15 @@ public class Activity {
     private Instant occurredAt;
     @CreationTimestamp @Column(name = "created_at", nullable = false, updatable = false) @Setter(AccessLevel.NONE)
     private Instant createdAt;
+
+    public Activity(Lead lead, ActivityType type, ActivityDirection direction, String subject,
+            String content, Instant occurredAt) {
+        this.organization = lead.getOrganization();
+        this.lead = lead;
+        this.type = type;
+        this.direction = direction;
+        this.subject = subject;
+        this.content = content;
+        this.occurredAt = occurredAt;
+    }
 }
