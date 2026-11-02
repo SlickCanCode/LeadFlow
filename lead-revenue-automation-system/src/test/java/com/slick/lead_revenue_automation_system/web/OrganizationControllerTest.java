@@ -5,6 +5,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -27,6 +28,7 @@ import com.slick.lead_revenue_automation_system.dto.OrganizationSettingsResponse
 import com.slick.lead_revenue_automation_system.entities.enums.AITone;
 import com.slick.lead_revenue_automation_system.exception.OrganizationNotFoundException;
 import com.slick.lead_revenue_automation_system.exception.OrganizationSettingsConflictException;
+import com.slick.lead_revenue_automation_system.exception.OrganizationSettingsNotFoundException;
 import com.slick.lead_revenue_automation_system.services.OrganizationService;
 import com.slick.lead_revenue_automation_system.services.LeadService;
 
@@ -78,6 +80,37 @@ class OrganizationControllerTest {
     }
 
     @Test
+    void updatesOrganization() throws Exception {
+        UUID organizationId = UUID.fromString("53c13798-92d1-4f0a-9f9a-9a20f7153592");
+        when(organizationService.updateOrganization(
+                org.mockito.ArgumentMatchers.eq(organizationId), any(CreateOrganizationdto.class)))
+                .thenReturn(new OrganizationResponse(
+                        organizationId, "Acme Updated", "acme-updated", null, null, null, null,
+                        "UTC", "USD", null, null));
+
+        mockMvc.perform(put("/api/v1/organization/{organizationId}", organizationId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Acme Updated\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Acme Updated"))
+                .andExpect(jsonPath("$.slug").value("acme-updated"));
+    }
+
+    @Test
+    void rejectsOrganizationUpdateWithoutRequiredName() throws Exception {
+        UUID organizationId = UUID.fromString("53c13798-92d1-4f0a-9f9a-9a20f7153592");
+
+        mockMvc.perform(put("/api/v1/organization/{organizationId}", organizationId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0]").value("Organization name is required"));
+
+        verify(organizationService, never()).updateOrganization(
+                org.mockito.ArgumentMatchers.eq(organizationId), any(CreateOrganizationdto.class));
+    }
+
+    @Test
     void createsOrganizationSettingsWithDefaults() throws Exception {
         UUID organizationId = UUID.fromString("53c13798-92d1-4f0a-9f9a-9a20f7153592");
         when(organizationService.createOrganizationSettings(
@@ -114,6 +147,65 @@ class OrganizationControllerTest {
                         .content("{\"aiTone\":\"LOUD\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0]").value("Request body contains invalid or malformed values."));
+    }
+
+    @Test
+    void updatesOrganizationSettings() throws Exception {
+        UUID organizationId = UUID.fromString("53c13798-92d1-4f0a-9f9a-9a20f7153592");
+        when(organizationService.updateOrganizationSettings(
+                org.mockito.ArgumentMatchers.eq(organizationId), any(CreateOrganizationSettingsRequest.class)))
+                .thenReturn(new OrganizationSettingsResponse(
+                        UUID.fromString("62d248a9-a3e2-40b1-8f0a-0b30f8264603"),
+                        organizationId,
+                        "Updated description",
+                        "Updated instructions",
+                        AITone.FRIENDLY,
+                        true,
+                        false,
+                        java.util.Map.of(),
+                        null,
+                        null));
+
+        mockMvc.perform(put("/api/v1/organization/{organizationId}/settings", organizationId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"businessDescription\":\"Updated description\","
+                                + "\"aiInstructions\":\"Updated instructions\","
+                                + "\"aiTone\":\"FRIENDLY\",\"autoReplyEnabled\":true,"
+                                + "\"requireHumanApproval\":false,\"settings\":{}}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.businessDescription").value("Updated description"))
+                .andExpect(jsonPath("$.aiTone").value("FRIENDLY"))
+                .andExpect(jsonPath("$.autoReplyEnabled").value(true))
+                .andExpect(jsonPath("$.requireHumanApproval").value(false));
+    }
+
+    @Test
+    void rejectsInvalidSettingsToneDuringUpdate() throws Exception {
+        UUID organizationId = UUID.fromString("53c13798-92d1-4f0a-9f9a-9a20f7153592");
+
+        mockMvc.perform(put("/api/v1/organization/{organizationId}/settings", organizationId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"aiTone\":\"LOUD\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0]").value("Request body contains invalid or malformed values."));
+
+        verify(organizationService, never()).updateOrganizationSettings(
+                org.mockito.ArgumentMatchers.eq(organizationId), any(CreateOrganizationSettingsRequest.class));
+    }
+
+    @Test
+    void returnsNotFoundWhenUpdatingSettingsThatDoNotExist() throws Exception {
+        UUID organizationId = UUID.fromString("53c13798-92d1-4f0a-9f9a-9a20f7153592");
+        when(organizationService.updateOrganizationSettings(
+                org.mockito.ArgumentMatchers.eq(organizationId), any(CreateOrganizationSettingsRequest.class)))
+                .thenThrow(new OrganizationSettingsNotFoundException(organizationId));
+
+        mockMvc.perform(put("/api/v1/organization/{organizationId}/settings", organizationId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errors[0]").value(
+                        "Settings for organization " + organizationId + " were not found."));
     }
 
     @Test

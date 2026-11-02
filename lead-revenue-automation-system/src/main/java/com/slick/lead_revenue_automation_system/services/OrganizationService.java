@@ -11,7 +11,12 @@ import com.slick.lead_revenue_automation_system.dto.OrganizationSettingsResponse
 public interface OrganizationService {
     OrganizationResponse createOrganization(CreateOrganizationdto request);
 
+    OrganizationResponse updateOrganization(UUID organizationId, CreateOrganizationdto request);
+
     OrganizationSettingsResponse createOrganizationSettings(
+            UUID organizationId, CreateOrganizationSettingsRequest request);
+
+    OrganizationSettingsResponse updateOrganizationSettings(
             UUID organizationId, CreateOrganizationSettingsRequest request);
 
     OrganizationBusinessInfo getOrganizationBusinessInfo(UUID organizationId);

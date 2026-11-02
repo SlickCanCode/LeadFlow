@@ -8,6 +8,7 @@ import com.slick.lead_revenue_automation_system.exception.LeadConflictException;
 import com.slick.lead_revenue_automation_system.exception.LeadNotFoundException;
 import com.slick.lead_revenue_automation_system.exception.OrganizationNotFoundException;
 import com.slick.lead_revenue_automation_system.exception.OrganizationSettingsConflictException;
+import com.slick.lead_revenue_automation_system.exception.OrganizationSettingsNotFoundException;
 import com.slick.lead_revenue_automation_system.exception.OrganizationBusinessSettingsRequiredException;
 import com.slick.lead_revenue_automation_system.exception.ServiceUnavailableException;
 import org.slf4j.Logger;
@@ -53,6 +54,13 @@ public class ApplicationExceptionHandler {
 	public ResponseEntity<Object> handleOrganizationSettingsConflict(OrganizationSettingsConflictException exception) {
 		ErrorResponse error = new ErrorResponse(Arrays.asList(exception.getMessage()));
 		return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+	}
+
+	@ExceptionHandler(OrganizationSettingsNotFoundException.class)
+	public ResponseEntity<Object> handleOrganizationSettingsNotFound(
+			OrganizationSettingsNotFoundException exception) {
+		ErrorResponse error = new ErrorResponse(Arrays.asList(exception.getMessage()));
+		return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
 	}
 
 	@ExceptionHandler(OrganizationConflictException.class)

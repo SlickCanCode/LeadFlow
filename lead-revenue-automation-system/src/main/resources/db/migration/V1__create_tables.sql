@@ -396,7 +396,7 @@ CREATE TABLE activity (
     organization_id UUID NOT NULL,
     lead_id         UUID NOT NULL,
     user_id         UUID,
-    type            VARCHAR(30) NOT NULL,
+    type            VARCHAR(30) NOT NULL, 
     direction       VARCHAR(20),
     subject         VARCHAR(255),
     content         TEXT,

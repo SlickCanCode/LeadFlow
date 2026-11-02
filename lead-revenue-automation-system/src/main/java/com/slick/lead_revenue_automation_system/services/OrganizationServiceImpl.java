@@ -19,6 +19,7 @@ import com.slick.lead_revenue_automation_system.exception.OrganizationConflictEx
 import com.slick.lead_revenue_automation_system.exception.OrganizationBusinessSettingsRequiredException;
 import com.slick.lead_revenue_automation_system.exception.OrganizationNotFoundException;
 import com.slick.lead_revenue_automation_system.exception.OrganizationSettingsConflictException;
+import com.slick.lead_revenue_automation_system.exception.OrganizationSettingsNotFoundException;
 import com.slick.lead_revenue_automation_system.repositories.OrganizationRepository;
 import com.slick.lead_revenue_automation_system.repositories.OrganizationSettingsRepository;
 import com.slick.lead_revenue_automation_system.entities.enums.AITone;
@@ -39,10 +40,9 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Override
     @Transactional
     public OrganizationResponse createOrganization(CreateOrganizationdto request) {
-        String slug = createUniqueSlug(request.name());
         Organization organization = new Organization(
                 request.name(),
-                slug,
+                createUniqueSlug(request.name()),
                 request.email(),
                 request.phone(),
                 request.address(),
@@ -50,27 +50,53 @@ public class OrganizationServiceImpl implements OrganizationService {
                 request.timezone(),
                 request.currency());
 
-        Organization savedOrganization;
         try {
-            savedOrganization = organizationRepository.saveAndFlush(organization);
+            return toOrganizationResponse(organizationRepository.saveAndFlush(organization));
         } catch (DataIntegrityViolationException exception) {
-            throw new OrganizationConflictException(
-                    "The organization could not be created because its URL conflicts with another organization.",
-                    exception);
+            throw organizationSlugConflict(exception);
         }
+    }
 
+    @Override
+    @Transactional
+    public OrganizationResponse updateOrganization(UUID organizationId, CreateOrganizationdto request) {
+        Organization organization = organizationRepository.findById(organizationId)
+                .orElseThrow(() -> new OrganizationNotFoundException(organizationId));
+
+        organization.setName(request.name());
+        organization.setSlug(createUniqueSlug(request.name(), organizationId));
+        organization.setEmail(request.email());
+        organization.setPhone(request.phone());
+        organization.setAddress(request.address());
+        organization.setLogoUrl(request.logoUrl());
+        organization.setTimezone(request.timezone() == null ? "UTC" : request.timezone());
+        organization.setCurrency(request.currency() == null ? "USD" : request.currency());
+
+        try {
+            return toOrganizationResponse(organizationRepository.saveAndFlush(organization));
+        } catch (DataIntegrityViolationException exception) {
+            throw organizationSlugConflict(exception);
+        }
+    }
+
+    private OrganizationConflictException organizationSlugConflict(DataIntegrityViolationException cause) {
+        return new OrganizationConflictException(
+                "The organization could not be saved because its URL conflicts with another organization.", cause);
+    }
+
+    private OrganizationResponse toOrganizationResponse(Organization organization) {
         return new OrganizationResponse(
-                savedOrganization.getId(),
-                savedOrganization.getName(),
-                savedOrganization.getSlug(),
-                savedOrganization.getEmail(),
-                savedOrganization.getPhone(),
-                savedOrganization.getAddress(),
-                savedOrganization.getLogoUrl(),
-                savedOrganization.getTimezone(),
-                savedOrganization.getCurrency(),
-                savedOrganization.getCreatedAt(),
-                savedOrganization.getUpdatedAt());
+                organization.getId(),
+                organization.getName(),
+                organization.getSlug(),
+                organization.getEmail(),
+                organization.getPhone(),
+                organization.getAddress(),
+                organization.getLogoUrl(),
+                organization.getTimezone(),
+                organization.getCurrency(),
+                organization.getCreatedAt(),
+                organization.getUpdatedAt());
     }
 
     @Override
@@ -101,6 +127,25 @@ public class OrganizationServiceImpl implements OrganizationService {
         }
     }
 
+    @Override
+    @Transactional
+    public OrganizationSettingsResponse updateOrganizationSettings(
+            UUID organizationId, CreateOrganizationSettingsRequest request) {
+        organizationRepository.findById(organizationId)
+                .orElseThrow(() -> new OrganizationNotFoundException(organizationId));
+        OrganizationSettings settings = organizationSettingsRepository.findByOrganization_Id(organizationId)
+                .orElseThrow(() -> new OrganizationSettingsNotFoundException(organizationId));
+
+        settings.setBusinessDescription(request.businessDescription());
+        settings.setAiInstructions(request.aiInstructions());
+        settings.setAiTone(request.aiTone());
+        settings.setAutoReplyEnabled(request.autoReplyEnabled());
+        settings.setRequireHumanApproval(request.requireHumanApproval());
+        settings.setSettings(request.settings());
+
+        return toSettingsResponse(organizationSettingsRepository.saveAndFlush(settings));
+    }
+
     private OrganizationSettingsResponse toSettingsResponse(OrganizationSettings organizationSettings) {
         return new OrganizationSettingsResponse(
                 organizationSettings.getId(),
@@ -115,15 +160,15 @@ public class OrganizationServiceImpl implements OrganizationService {
                 organizationSettings.getUpdatedAt());
     }
 
-            @Override
-            @Transactional(readOnly = true)
-            public OrganizationBusinessInfo getOrganizationBusinessInfo(UUID organizationId) {
-            Organization organization = organizationRepository.findById(organizationId)
+    @Override
+    @Transactional(readOnly = true)
+    public OrganizationBusinessInfo getOrganizationBusinessInfo(UUID organizationId) {
+        Organization organization = organizationRepository.findById(organizationId)
                 .orElseThrow(() -> new OrganizationNotFoundException(organizationId));
-            OrganizationSettings settings = organizationSettingsRepository.findByOrganization_Id(organizationId)
+        OrganizationSettings settings = organizationSettingsRepository.findByOrganization_Id(organizationId)
                 .orElseThrow(() -> new OrganizationBusinessSettingsRequiredException(organizationId));
 
-            return new OrganizationBusinessInfo(
+        return new OrganizationBusinessInfo(
                 organization.getId(),
                 organization.getName(),
                 organization.getEmail(),
@@ -137,14 +182,18 @@ public class OrganizationServiceImpl implements OrganizationService {
                 settings.isAutoReplyEnabled(),
                 settings.isRequireHumanApproval(),
                 settings.getSettings());
-            }
+    }
 
     private String createUniqueSlug(String name) {
+        return createUniqueSlug(name, null);
+    }
+
+    private String createUniqueSlug(String name, UUID excludedOrganizationId) {
         String baseSlug = slugify(name);
         String slug = baseSlug;
         int suffix = 2;
 
-        while (organizationRepository.existsBySlug(slug)) {
+        while (slugExists(slug, excludedOrganizationId)) {
             String suffixText = "-" + suffix++;
             int baseLength = MAX_SLUG_LENGTH - suffixText.length();
             slug = baseSlug.substring(0, Math.min(baseSlug.length(), baseLength))
@@ -152,6 +201,12 @@ public class OrganizationServiceImpl implements OrganizationService {
         }
 
         return slug;
+    }
+
+    private boolean slugExists(String slug, UUID excludedOrganizationId) {
+        return excludedOrganizationId == null
+                ? organizationRepository.existsBySlug(slug)
+                : organizationRepository.existsBySlugAndIdNot(slug, excludedOrganizationId);
     }
 
     private String slugify(String name) {

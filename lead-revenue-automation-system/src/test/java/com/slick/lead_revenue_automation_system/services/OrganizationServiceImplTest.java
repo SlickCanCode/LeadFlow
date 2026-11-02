@@ -32,6 +32,7 @@ import com.slick.lead_revenue_automation_system.exception.OrganizationConflictEx
 import com.slick.lead_revenue_automation_system.exception.OrganizationBusinessSettingsRequiredException;
 import com.slick.lead_revenue_automation_system.exception.OrganizationNotFoundException;
 import com.slick.lead_revenue_automation_system.exception.OrganizationSettingsConflictException;
+import com.slick.lead_revenue_automation_system.exception.OrganizationSettingsNotFoundException;
 import com.slick.lead_revenue_automation_system.repositories.OrganizationRepository;
 import com.slick.lead_revenue_automation_system.repositories.OrganizationSettingsRepository;
 
@@ -75,6 +76,42 @@ class OrganizationServiceImplTest {
 
         assertThrows(OrganizationConflictException.class, () -> organizationService.createOrganization(
                 new CreateOrganizationdto("Acme Services", null, null, null, null, null, null)));
+    }
+
+    @Test
+    void updatesOrganizationAndRegeneratesUniqueSlug() {
+        UUID organizationId = UUID.fromString("53c13798-92d1-4f0a-9f9a-9a20f7153592");
+        Organization organization = new Organization("Old Name", "old-name", null, null, null,
+                null, "UTC", "USD");
+        ReflectionTestUtils.setField(organization, "id", organizationId);
+        when(organizationRepository.findById(organizationId)).thenReturn(Optional.of(organization));
+        when(organizationRepository.existsBySlugAndIdNot("acme-services", organizationId)).thenReturn(false);
+        when(organizationRepository.saveAndFlush(organization)).thenReturn(organization);
+
+        var response = organizationService.updateOrganization(organizationId,
+                new CreateOrganizationdto("Acme Services", "hello@acme.test", "555-0100",
+                        "Main Street", "https://acme.test/logo.png", "Europe/London", "gbp"));
+
+        assertEquals("Acme Services", organization.getName());
+        assertEquals("acme-services", organization.getSlug());
+        assertEquals("hello@acme.test", organization.getEmail());
+        assertEquals("555-0100", organization.getPhone());
+        assertEquals("Main Street", organization.getAddress());
+        assertEquals("https://acme.test/logo.png", organization.getLogoUrl());
+        assertEquals("Europe/London", organization.getTimezone());
+        assertEquals("GBP", organization.getCurrency());
+        assertEquals(organizationId, response.id());
+    }
+
+    @Test
+    void rejectsUpdateForUnknownOrganization() {
+        UUID organizationId = UUID.fromString("53c13798-92d1-4f0a-9f9a-9a20f7153592");
+        when(organizationRepository.findById(organizationId)).thenReturn(Optional.empty());
+
+        assertThrows(OrganizationNotFoundException.class, () -> organizationService.updateOrganization(
+                organizationId, new CreateOrganizationdto("Acme", null, null, null, null, null, null)));
+
+        verify(organizationRepository, never()).saveAndFlush(any(Organization.class));
     }
 
             @Test
@@ -127,6 +164,56 @@ class OrganizationServiceImplTest {
 
             verify(organizationSettingsRepository, never()).saveAndFlush(any(OrganizationSettings.class));
             }
+
+    @Test
+    void updatesExistingOrganizationSettings() {
+        UUID organizationId = UUID.fromString("53c13798-92d1-4f0a-9f9a-9a20f7153592");
+        Organization organization = new Organization("Acme Services", "acme-services", null, null, null,
+                null, null, null);
+        ReflectionTestUtils.setField(organization, "id", organizationId);
+        OrganizationSettings settings = new OrganizationSettings(organization, "Old description", "Old instructions",
+                AITone.PROFESSIONAL, false, true, Map.of());
+        when(organizationRepository.findById(organizationId)).thenReturn(Optional.of(organization));
+        when(organizationSettingsRepository.findByOrganization_Id(organizationId)).thenReturn(Optional.of(settings));
+        when(organizationSettingsRepository.saveAndFlush(settings)).thenReturn(settings);
+
+        var response = organizationService.updateOrganizationSettings(organizationId,
+                new CreateOrganizationSettingsRequest("New description", "New instructions",
+                        AITone.FRIENDLY, true, false, Map.of("region", "west")));
+
+        assertEquals("New description", settings.getBusinessDescription());
+        assertEquals("New instructions", settings.getAiInstructions());
+        assertEquals(AITone.FRIENDLY, settings.getAiTone());
+        assertEquals(true, settings.isAutoReplyEnabled());
+        assertEquals(false, settings.isRequireHumanApproval());
+        assertEquals(Map.of("region", "west"), settings.getSettings());
+        assertEquals(organizationId, response.organizationId());
+    }
+
+    @Test
+    void rejectsSettingsUpdateWhenOrganizationDoesNotExist() {
+        UUID organizationId = UUID.fromString("53c13798-92d1-4f0a-9f9a-9a20f7153592");
+        when(organizationRepository.findById(organizationId)).thenReturn(Optional.empty());
+
+        assertThrows(OrganizationNotFoundException.class, () -> organizationService.updateOrganizationSettings(
+                organizationId, new CreateOrganizationSettingsRequest(null, null, null, null, null, null)));
+
+        verifyNoInteractions(organizationSettingsRepository);
+    }
+
+    @Test
+    void rejectsSettingsUpdateWhenSettingsHaveNotBeenCreated() {
+        UUID organizationId = UUID.fromString("53c13798-92d1-4f0a-9f9a-9a20f7153592");
+        Organization organization = new Organization("Acme Services", "acme-services", null, null, null,
+                null, null, null);
+        when(organizationRepository.findById(organizationId)).thenReturn(Optional.of(organization));
+        when(organizationSettingsRepository.findByOrganization_Id(organizationId)).thenReturn(Optional.empty());
+
+        assertThrows(OrganizationSettingsNotFoundException.class, () -> organizationService.updateOrganizationSettings(
+                organizationId, new CreateOrganizationSettingsRequest(null, null, null, null, null, null)));
+
+        verify(organizationSettingsRepository, never()).saveAndFlush(any(OrganizationSettings.class));
+    }
 
             @Test
             void retrievesOrganizationBusinessInfoFromOrganizationAndSettings() {

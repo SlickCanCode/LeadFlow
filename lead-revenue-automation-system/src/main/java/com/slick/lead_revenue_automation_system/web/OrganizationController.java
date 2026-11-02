@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,12 +38,26 @@ public class OrganizationController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
+	@PutMapping("/{organizationId}")
+	public OrganizationResponse updateOrganization(
+			@PathVariable UUID organizationId,
+			@Valid @RequestBody CreateOrganizationdto request) {
+		return organizationService.updateOrganization(organizationId, request);
+	}
+
 	@PostMapping("/{organizationId}/settings")
 	public ResponseEntity<OrganizationSettingsResponse> createOrganizationSettings(
 			@PathVariable UUID organizationId,
 			@Valid @RequestBody CreateOrganizationSettingsRequest request) {
 		OrganizationSettingsResponse response = organizationService.createOrganizationSettings(organizationId, request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
+	}
+
+	@PutMapping("/{organizationId}/settings")
+	public OrganizationSettingsResponse updateOrganizationSettings(
+			@PathVariable UUID organizationId,
+			@Valid @RequestBody CreateOrganizationSettingsRequest request) {
+		return organizationService.updateOrganizationSettings(organizationId, request);
 	}
 
 	@PostMapping("/lead")

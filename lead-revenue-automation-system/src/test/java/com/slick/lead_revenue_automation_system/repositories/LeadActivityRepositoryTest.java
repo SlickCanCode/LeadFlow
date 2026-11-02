@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.slick.lead_revenue_automation_system.entities.Activity;
@@ -21,6 +22,7 @@ import com.slick.lead_revenue_automation_system.entities.enums.ActivityType;
 import com.slick.lead_revenue_automation_system.entities.enums.LeadSource;
 
 @SpringBootTest
+@ActiveProfiles("dev")
 @Transactional
 class LeadActivityRepositoryTest {
     @Autowired

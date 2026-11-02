@@ -1,0 +1,3 @@
+ALTER TABLE organization
+ALTER COLUMN currency TYPE VARCHAR(3);
+
