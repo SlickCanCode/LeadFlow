@@ -13,6 +13,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.google.genai.GoogleGenAiChatOptions;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 
@@ -20,9 +21,13 @@ import org.springframework.stereotype.Component;
 public class GeminiService implements AiService{
 
 	private final ChatModel chatModel;
+	private final int maxOutputTokens;
 
-	public GeminiService(@Qualifier("googleGenAiChatModel") ChatModel chatModel) {
+	public GeminiService(
+			@Qualifier("googleGenAiChatModel") ChatModel chatModel,
+			@Value("${ai.chat.max-output-tokens:768}") int maxOutputTokens) {
 		this.chatModel = chatModel;
+		this.maxOutputTokens = maxOutputTokens;
 	}
 
 	@Override
@@ -34,6 +39,7 @@ public class GeminiService implements AiService{
 					GoogleGenAiChatOptions.builder()
 						.model(model)
 						.temperature(0.1)
+						.maxOutputTokens(maxOutputTokens)
 						.build()
 				));
 			String generatedText = response.getResults().get(0).getOutput().getText();

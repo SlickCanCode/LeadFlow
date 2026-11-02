@@ -8,7 +8,8 @@ This guide describes the HTTP endpoints currently exposed by the backend, includ
 - Send JSON requests with `Content-Type: application/json`.
 - IDs are UUID strings. Timestamps are ISO-8601 strings.
 - Successful JSON errors use `{"errors":["message"]}`. Validation and malformed-body errors return `400`; missing organizations return `404`; duplicate/conflicting resources and missing business settings return `409`; unavailable AI services return `503`; unexpected errors return `500`.
-- No API authentication or CORS configuration was found in the current application. If the landing page is hosted on another origin, configure CORS for that origin or proxy requests through the landing-page server. Do not expose administrative endpoints publicly without adding appropriate access controls.
+- Spring Security permits unauthenticated `POST` requests only to the web-chat and contact-form message endpoints. Other API routes, including organization setup, manual leads, one-off messages, and the WhatsApp webhook, are denied until an authentication policy is implemented. Provision initial organizations through a trusted deployment process, not by exposing setup endpoints.
+- Browser CORS is configured with `APP_CORS_ALLOWED_ORIGINS` (defaults to `http://localhost:3000`). Set it to the exact production frontend origin(s); do not use `*`. CORS is not authentication: non-browser clients can still call the two public message routes, so enforce abuse controls at the deployment edge before public launch.
 
 ## Endpoints
 
@@ -182,7 +183,14 @@ Allowed `source` values: `WEBSITE_CONTACTFORM`, `WEBSITE_CHATBOX`, `WHATSAPP`, `
 
 ### WhatsApp webhook
 
-These routes are for the WhatsApp provider to call, not for browser-based landing-page requests. The verification token is configured on the backend; never send it from frontend code.
+The webhook is not enabled for this tracer bullet. Spring Security denies these routes until webhook signature verification and processing are ready. The verification token is generated per application start unless `WHATSAPP_VERIFY_TOKEN` is configured; never send it from frontend code.
+
+### Deployment configuration
+
+- Set `APP_CORS_ALLOWED_ORIGINS` to the exact deployed frontend origin.
+- Set database connection values and AI provider API keys through the deployment secret/configuration manager, not frontend code or committed configuration.
+- AI output is capped at 768 tokens by default to limit generation time; override with `AI_CHAT_MAX_OUTPUT_TOKENS` if the business requires longer responses. User input remains unconstrained by this application.
+- Production exposes only the actuator health endpoint, hides health details, disables SQL formatting and Open Session in View, and uses graceful shutdown.
 
 #### Verify webhook subscription
 

@@ -15,6 +15,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.google.genai.GoogleGenAiChatOptions;
 
 class GeminiServiceTest {
 	@Test
@@ -22,7 +23,7 @@ class GeminiServiceTest {
 		ChatModel chatModel = mock(ChatModel.class);
 		IllegalStateException providerFailure = new IllegalStateException("provider detail");
 		when(chatModel.call(any(Prompt.class))).thenThrow(providerFailure);
-		GeminiService geminiService = new GeminiService(chatModel);
+		GeminiService geminiService = new GeminiService(chatModel, 768);
 
 		ServiceUnavailableException thrown = assertThrows(ServiceUnavailableException.class,
 				() -> geminiService.generate("Business prompt", "Hello", "gemini-2.5-flash"));
@@ -37,5 +38,6 @@ class GeminiServiceTest {
 		assertEquals(2, messages.size());
 		assertEquals("Business prompt", messages.get(0).getText());
 		assertEquals("Hello", messages.get(1).getText());
+		assertEquals(768, ((GoogleGenAiChatOptions) promptCaptor.getValue().getOptions()).getMaxOutputTokens());
 	}
 }

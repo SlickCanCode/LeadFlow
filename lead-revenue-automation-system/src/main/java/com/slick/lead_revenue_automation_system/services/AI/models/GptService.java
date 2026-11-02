@@ -19,12 +19,15 @@ import org.springframework.stereotype.Component;
 public class GptService implements AiService{
 	private final ObjectProvider<OpenAiChatModel> chatModelProvider;
 	private final String apiKey;
+	private final int maxOutputTokens;
 
 	public GptService(
 			@Qualifier("openAiChatModel") ObjectProvider<OpenAiChatModel> chatModelProvider,
-			@Value("${spring.ai.openai.api-key}") String apiKey) {
+			@Value("${spring.ai.openai.api-key}") String apiKey,
+			@Value("${ai.chat.max-output-tokens:768}") int maxOutputTokens) {
 		this.chatModelProvider = chatModelProvider;
 		this.apiKey = apiKey;
+		this.maxOutputTokens = maxOutputTokens;
 	}
 
 	@Override
@@ -35,7 +38,7 @@ public class GptService implements AiService{
 
 		ChatResponse response = chatModelProvider.getObject().call(new Prompt(
 				createMessages(systemPrompt, userMessage),
-				OpenAiChatOptions.builder().model(model).build()));
+				OpenAiChatOptions.builder().model(model).maxCompletionTokens(maxOutputTokens).build()));
 
 		if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
 			throw new IllegalStateException("OpenAI returned no message content");
