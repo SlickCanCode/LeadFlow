@@ -1,0 +1,26 @@
+@tailwind base; @tailwind components; @tailwind utilities;
+@layer base {
+  html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
+  body { @apply bg-paper text-navy antialiased; }
+  /* One consistent, visible keyboard focus ring for every interactive element. */
+  :focus-visible { @apply outline outline-2 outline-offset-2 outline-accent; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+}
+
+/* ---- Motion tokens ----
+   Strong ease-out: starts fast so UI feels responsive, settles gently. Built-in `ease` is too weak.
+   Durations stay under 300ms for UI feedback. We only animate transform + opacity (GPU-friendly). */
+:root { --ease-out: cubic-bezier(0.23, 1, 0.32, 1); }
+@keyframes rise-in { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes dot { 0%,60%,100% { opacity: .35; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+.msg-in { animation: rise-in 240ms var(--ease-out) both; }
+.dot { animation: dot 1s var(--ease-out) infinite; }
+.dot:nth-child(2) { animation-delay: 120ms; } .dot:nth-child(3) { animation-delay: 240ms; }
+@media (prefers-reduced-motion: reduce) {
+  /* Reduced motion = no movement, but keep a quick fade so state changes are still visible. */
+  .msg-in { animation: fade-only 150ms linear both; } .dot { animation: none; opacity: .6; }
+}
+@keyframes fade-only { from { opacity: 0; } to { opacity: 1; } }
