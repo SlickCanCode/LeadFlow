@@ -3,6 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { ChatMessage, sendChatMessage } from "@/lib/chat-api";
 import { Button } from "../ui/Button";
 import { BusinessPanel } from "./BusinessPanel";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
 
 const SUGGESTIONS = [
   "What services do you offer?",
@@ -20,7 +23,7 @@ function TypingBubble() {
           <span key={dot} className="dot h-2.5 w-2.5 rounded-full bg-navy-soft/70" />
         ))}
       </div>
-      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-navy-soft"></span>
+
     </div>
   );
 }
@@ -97,7 +100,30 @@ export function ChatDemo() {
             )}
             {messages.map((m) => (
               <div key={m.id} className={`msg-in flex ${m.role === "user" ? "justify-end" : ""}`}>
-                <p className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm ${m.role === "user" ? "bg-accent text-white" : "bg-mist text-navy"}`}>{m.text}</p>
+                <div
+  className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
+    m.role === "user"
+      ? "bg-accent text-white"
+      : "bg-mist text-navy"
+  }`}
+>
+  <ReactMarkdown
+    remarkPlugins={[remarkGfm]}
+    components={{
+      p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+      ul: ({ children }) => (
+        <ul className="my-2 list-disc space-y-1 pl-5">{children}</ul>
+      ),
+      ol: ({ children }) => (
+        <ol className="my-2 list-decimal space-y-1 pl-5">{children}</ol>
+      ),
+      li: ({ children }) => <li>{children}</li>,
+      strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+    }}
+  >
+    {m.text}
+  </ReactMarkdown>
+</div>
               </div>
             ))}
             {loading && <TypingBubble />}

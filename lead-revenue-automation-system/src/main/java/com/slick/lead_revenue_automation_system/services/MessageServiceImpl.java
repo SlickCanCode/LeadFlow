@@ -1,5 +1,7 @@
 package com.slick.lead_revenue_automation_system.services;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,6 +20,9 @@ import com.slick.lead_revenue_automation_system.services.context.ContextBuilder;
 import com.slick.lead_revenue_automation_system.services.context.ConversationContext;
 import com.slick.lead_revenue_automation_system.services.context.PromptBuilder;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j 
 @Service
 public class MessageServiceImpl implements MessageService {
 	private final AiModelRouter aiModelRouter;
@@ -74,8 +79,9 @@ public class MessageServiceImpl implements MessageService {
 
 		ConversationContext context = contextBuilder.build(organization, lead, recentActivities, null);
 		String systemPrompt = promptBuilder.buildSystemPrompt(context);
-		RoutedResponse response = aiModelRouter.generate(systemPrompt, message);
-
+		long now = System.currentTimeMillis();
+         		RoutedResponse response = aiModelRouter.generate(systemPrompt, message);
+		log.info("Ai response took {} seconds", (System.currentTimeMillis() - now) / 1000.0);
 		activityService.recordMessage(organizationId, lead, activityType, ActivityDirection.OUTBOUND,
 				response.response());
 		return response;

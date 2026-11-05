@@ -37,14 +37,14 @@ public class AiModelRouter {
 	public RoutedResponse generate(String systemPrompt, String userMessage) {
 		RuntimeException lastFailure = null;
 
-		for (String model : openAiModels) {
-			try {
-				return new RoutedResponse(
-						openAiService.generate(systemPrompt, userMessage, model), "OpenAI", model);
-			} catch (RuntimeException exception) {
-				lastFailure = exception;
-			}
-		}
+		// for (String model : openAiModels) {
+		// 	try {
+		// 		return new RoutedResponse(
+		// 				openAiService.generate(systemPrompt, userMessage, model), "OpenAI", model);
+		// 	} catch (RuntimeException exception) {
+		// 		lastFailure = exception;
+		// 	}
+		// }
 
 		for (String model : geminiModels) {
 			try {

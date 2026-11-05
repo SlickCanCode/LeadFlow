@@ -38,7 +38,7 @@ public class GeminiService implements AiService{
 					createMessages(systemPrompt, userMessage),
 					GoogleGenAiChatOptions.builder()
 						.model(model)
-						.temperature(0.1)
+						.temperature(0.3)
 						.maxOutputTokens(maxOutputTokens)
 						.build()
 				));
@@ -50,7 +50,7 @@ public class GeminiService implements AiService{
 		} catch (RuntimeException exception) {
 			throw new ServiceUnavailableException(
 					ServiceUnavailableException.GEMINI_SERVICE,
-					"Gemini is temporarily unavailable. Please try again later.",
+					"Gemini Assistant is temporarily unavailable. Please try again later.",
 					exception);
 		}
 	}
