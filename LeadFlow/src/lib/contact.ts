@@ -15,11 +15,29 @@ export function validate(p: ContactPayload): FieldErrors {
   return e;
 }
 
-/** Posts JSON to the configurable endpoint. Swap the body shape here when the real endpoint is known. */
+const WEB3FORMS_ENDPOINT = "https://api.web3forms.com/submit";
+
 export async function submitContact(p: ContactPayload): Promise<void> {
-  if (!site.contactEndpoint) throw new Error("NOT_CONFIGURED");
-  const res = await fetch(site.contactEndpoint, {
-    method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(p),
+  if (!site.web3FormsAccessKey) throw new Error("NOT_CONFIGURED");
+
+  const contact = p.contact.trim();
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact);
+  const res = await fetch(WEB3FORMS_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      access_key: site.web3FormsAccessKey,
+      name: p.name.trim(),
+      ...(isEmail ? { email: contact } : {}),
+      business: p.business.trim(),
+      "Email or WhatsApp number": contact,
+      subject: `New LeadFlow enquiry from ${p.name.trim()}`,
+      message: p.problem.trim(),
+    }),
   });
-  if (!res.ok) throw new Error(`HTTP_${res.status}`);
+
+  const result: { success?: boolean; message?: string } = await res.json();
+  if (!res.ok || result.success !== true) {
+    throw new Error(result.message || `Web3Forms request failed (${res.status})`);
+  }
 }
