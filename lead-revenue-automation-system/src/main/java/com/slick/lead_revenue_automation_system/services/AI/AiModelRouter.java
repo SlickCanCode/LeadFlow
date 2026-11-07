@@ -37,6 +37,7 @@ public class AiModelRouter {
 	public RoutedResponse generate(String systemPrompt, String userMessage) {
 		RuntimeException lastFailure = null;
 
+		// OpenAI routing is disabled while Gemini is the active provider.
 		// for (String model : openAiModels) {
 		// 	try {
 		// 		return new RoutedResponse(

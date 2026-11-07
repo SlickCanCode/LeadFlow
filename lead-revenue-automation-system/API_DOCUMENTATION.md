@@ -9,9 +9,15 @@ This guide describes the HTTP endpoints currently exposed by the backend, includ
 - IDs are UUID strings. Timestamps are ISO-8601 strings.
 - Successful JSON errors use `{"errors":["message"]}`. Validation and malformed-body errors return `400`; missing organizations return `404`; duplicate/conflicting resources and missing business settings return `409`; unavailable AI services return `503`; unexpected errors return `500`.
 - Spring Security permits unauthenticated `POST` requests only to the web-chat and contact-form message endpoints. Other API routes, including organization setup, manual leads, one-off messages, and the WhatsApp webhook, are denied until an authentication policy is implemented. Provision initial organizations through a trusted deployment process, not by exposing setup endpoints.
-- Browser CORS is configured with `APP_CORS_ALLOWED_ORIGINS` (defaults to `http://localhost:3000`). Set it to the exact production frontend origin(s); do not use `*`. CORS is not authentication: non-browser clients can still call the two public message routes, so enforce abuse controls at the deployment edge before public launch.
+- Browser CORS for `/api/v1/**` is configured with `APP_CORS_ALLOWED_ORIGINS` (defaults to `http://localhost:3000`). Set it to the exact production frontend origin(s); do not use `*`. The unauthenticated `/actuator/health` check is an exception and allows cross-origin GETs from any site without credentials. CORS is not authentication: non-browser clients can still call the two public message routes, so enforce abuse controls at the deployment edge before public launch.
 
 ## Endpoints
+
+### Health
+
+`GET /actuator/health`
+
+Returns the application health status without exposing health details. It is available without authentication and allows browser requests from any origin.
 
 ### Messages
 

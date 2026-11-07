@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 class AiModelRouterTest {
 	@Test
-	void skipsModelsBelowVersionFloorsAndFallsBackInOrder() {
+	void usesGeminiWithoutAttemptingConfiguredOpenAiModels() {
 		List<String> openAiAttempts = new ArrayList<>();
 		List<String> geminiAttempts = new ArrayList<>();
 		AiService openAi = (systemPrompt, userMessage, model) -> {
@@ -33,7 +33,7 @@ class AiModelRouterTest {
 
 		AiModelRouter.RoutedResponse response = router.generate("Business prompt", "Hello");
 
-		assertEquals(List.of("gpt-4.1-nano", "gpt-4o-mini"), openAiAttempts);
+		assertEquals(List.of(), openAiAttempts);
 		assertEquals(List.of("gemini-2.5-flash"), geminiAttempts);
 		assertEquals("Reply", response.response());
 		assertEquals("Gemini", response.provider());
@@ -41,11 +41,11 @@ class AiModelRouterTest {
 	}
 
 	@Test
-	void returnsFromOpenAiWithoutCallingGeminiWhenAvailable() {
+	void usesGeminiEvenWhenOpenAiModelsAreConfigured() {
+		List<String> openAiAttempts = new ArrayList<>();
 		List<String> geminiAttempts = new ArrayList<>();
 		AiService openAi = (systemPrompt, userMessage, model) -> {
-			assertEquals("Business prompt", systemPrompt);
-			assertEquals("Hello", userMessage);
+			openAiAttempts.add(model);
 			return "OpenAI reply";
 		};
 		AiService gemini = (systemPrompt, userMessage, model) -> {
@@ -57,9 +57,10 @@ class AiModelRouterTest {
 
 		AiModelRouter.RoutedResponse response = router.generate("Business prompt", "Hello");
 
-		assertEquals("OpenAI", response.provider());
-		assertEquals("OpenAI reply", response.response());
-		assertEquals(List.of(), geminiAttempts);
+		assertEquals("Gemini", response.provider());
+		assertEquals("Gemini reply", response.response());
+		assertEquals(List.of(), openAiAttempts);
+		assertEquals(List.of("gemini-2.5-flash"), geminiAttempts);
 	}
 
 	@Test

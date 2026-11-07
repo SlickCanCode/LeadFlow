@@ -77,4 +77,14 @@ class SecurityConfigurationTest {
                         .header("Access-Control-Request-Method", "POST"))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    void allowsHealthChecksFromAnyOrigin() throws Exception {
+        mockMvc.perform(options("/actuator/health")
+                        .header("Origin", "https://monitor.example")
+                        .header("Access-Control-Request-Method", "GET"))
+                .andExpect(status().isOk())
+        .andExpect(header().string("Access-Control-Allow-Origin", "*"))
+                .andExpect(header().string("Access-Control-Allow-Methods", "GET,OPTIONS"));
+    }
 }

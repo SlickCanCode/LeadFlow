@@ -29,7 +29,7 @@ class GeminiServiceTest {
 				() -> geminiService.generate("Business prompt", "Hello", "gemini-2.5-flash"));
 
 		assertEquals(ServiceUnavailableException.GEMINI_SERVICE, thrown.getServiceName());
-		assertEquals("Gemini is temporarily unavailable. Please try again later.", thrown.getMessage());
+		assertEquals("ClearFlow agent is temporarily unavailable. Please try again later.", thrown.getMessage());
 		assertSame(providerFailure, thrown.getCause());
 
 		ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);

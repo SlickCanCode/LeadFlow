@@ -50,7 +50,7 @@ public class GeminiService implements AiService{
 		} catch (RuntimeException exception) {
 			throw new ServiceUnavailableException(
 					ServiceUnavailableException.GEMINI_SERVICE,
-					"Gemini Assistant is temporarily unavailable. Please try again later.",
+					"ClearFlow agent is temporarily unavailable. Please try again later.",
 					exception);
 		}
 	}

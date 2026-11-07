@@ -49,6 +49,14 @@ public class SecurityConfiguration {
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/v1/**", configuration);
+
+        CorsConfiguration healthConfiguration = new CorsConfiguration();
+        healthConfiguration.setAllowedOrigins(List.of("*"));
+        healthConfiguration.setAllowedMethods(List.of("GET", "OPTIONS"));
+        healthConfiguration.setAllowedHeaders(List.of("*"));
+        healthConfiguration.setAllowCredentials(false);
+        healthConfiguration.setMaxAge(3600L);
+        source.registerCorsConfiguration("/actuator/health", healthConfiguration);
         return source;
     }
 }
