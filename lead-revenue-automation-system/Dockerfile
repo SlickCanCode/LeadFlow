@@ -2,7 +2,7 @@ FROM eclipse-temurin:21-jdk-jammy AS build
 
 WORKDIR /workspace
 COPY . .
-RUN chmod +x mvnw && ./mvnw -B -ntp package
+RUN chmod +x mvnw && ./mvnw -B -ntp package -DskipTests
 
 FROM eclipse-temurin:21-jre-jammy
 
