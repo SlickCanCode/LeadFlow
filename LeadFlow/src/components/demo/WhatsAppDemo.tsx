@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 const SCRIPT = [
   { me: false, text: "Hi, do you fix leaking pipes?", time: "9:41 PM" },
   { me: true, text: "Yes, we do. Which area are you in, and is it urgent?", time: "9:41 PM" },
-  { me: false, text: "Lekki. Water is dripping under the kitchen sink.", time: "9:42 PM" },
+  { me: false, text: "Springfield. Water is dripping under the kitchen sink.", time: "9:42 PM" },
   { me: true, text: "Thanks. Please send a photo if you can, and tell us when you are free.", time: "9:42 PM" },
 ];
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
