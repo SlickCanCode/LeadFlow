@@ -18,8 +18,6 @@ COPY --from=build --chown=10001:10001 /workspace/target/*.jar /app/app.jar
 ENV SPRING_PROFILES_ACTIVE=prod
 EXPOSE 8080
 STOPSIGNAL SIGTERM
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-    CMD-SHELL curl --fail --silent "http://127.0.0.1:${PORT:-8080}/actuator/health" || exit 1
 
 USER 10001:10001
 ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app/app.jar"]
