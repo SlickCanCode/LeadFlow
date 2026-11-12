@@ -33,6 +33,7 @@ public class SecurityConfiguration {
                                 "/api/v1/message/contact-form/send")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+                        .requestMatchers(HttpMethod.HEAD, "/actuator/health").permitAll()
                         .anyRequest().denyAll())
                 .build();
     }
@@ -52,7 +53,7 @@ public class SecurityConfiguration {
 
         CorsConfiguration healthConfiguration = new CorsConfiguration();
         healthConfiguration.setAllowedOrigins(List.of("*"));
-        healthConfiguration.setAllowedMethods(List.of("GET", "OPTIONS"));
+        healthConfiguration.setAllowedMethods(List.of("GET", "HEAD", "OPTIONS"));
         healthConfiguration.setAllowedHeaders(List.of("*"));
         healthConfiguration.setAllowCredentials(false);
         healthConfiguration.setMaxAge(3600L);

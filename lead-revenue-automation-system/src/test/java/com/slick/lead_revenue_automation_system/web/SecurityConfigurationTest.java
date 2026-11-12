@@ -1,7 +1,9 @@
 package com.slick.lead_revenue_automation_system.web;
 
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -19,6 +21,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(MessageController.class)
@@ -84,7 +87,14 @@ class SecurityConfigurationTest {
                         .header("Origin", "https://monitor.example")
                         .header("Access-Control-Request-Method", "GET"))
                 .andExpect(status().isOk())
-        .andExpect(header().string("Access-Control-Allow-Origin", "*"))
-                .andExpect(header().string("Access-Control-Allow-Methods", "GET,OPTIONS"));
+                .andExpect(header().string("Access-Control-Allow-Origin", "*"))
+                .andExpect(header().string("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS"));
+    }
+
+    @Test
+    void allowsHeadHealthChecksWithoutAuthentication() throws Exception {
+        mockMvc.perform(head("/actuator/health"))
+                .andExpect(result -> assertNotEquals(HttpStatus.FORBIDDEN.value(),
+                        result.getResponse().getStatus()));
     }
 }
